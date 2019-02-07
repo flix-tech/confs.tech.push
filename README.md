@@ -1,2 +1,5 @@
 # confs.tech.push
-Push data about tech conferences to somewhere you can read it (slack)
+
+A command line tool that gets tech conferences data from https://confs.tech/ and pushes it to slack.
+
+Also it ignores past conferences and allows you to ignore some countries.
