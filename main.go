@@ -29,6 +29,11 @@ func main() {
 			Usage:  "Countries to be blocked",
 			EnvVar: "COUNTRIES_BLACKLIST",
 		},
+		cli.BoolFlag{
+			Name:   "cfp-finished",
+			Usage:  "Post only conferences with CallForPapers stage finished",
+			EnvVar: "CFP_FINISHED",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -76,6 +81,11 @@ func slackAction(c *cli.Context) error {
 
 	// Filter out past conferences
 	conferences = filterFutureConferences(conferences)
+
+	// Filter by CFP end date
+	if c.GlobalBool("cfp-finished") {
+		conferences = filterCFPFinishedConferences(conferences)
+	}
 
 	// Filter by countries
 	countriesBlacklist := c.GlobalStringSlice("countries-blacklist")
@@ -170,6 +180,12 @@ func getConferences(topic string) ([]Conference, error) {
 func filterFutureConferences(conferences []Conference) []Conference {
 	return filterConferences(conferences, func(c Conference) bool {
 		return c.StartDate > time.Now().Format("2006-01-02")
+	})
+}
+
+func filterCFPFinishedConferences(conferences []Conference) []Conference {
+	return filterConferences(conferences, func(c Conference) bool {
+		return c.CFPEndDate < time.Now().Format("2006-01-02")
 	})
 }
 
