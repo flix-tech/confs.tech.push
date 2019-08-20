@@ -1,0 +1,11 @@
+language: go
+
+go:
+  - 1.11.x
+  - 1.12.x
+
+before_install:
+  - go get gopkg.in/urfave/cli.v1 github.com/gorilla/feeds
+
+script:
+  - go test ./cmd ./confs
