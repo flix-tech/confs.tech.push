@@ -1,14 +1,18 @@
 FROM golang:1.11-alpine as build
 
-WORKDIR /app
-
 RUN apk --no-cache add git
 
-RUN go get gopkg.in/urfave/cli.v1
+RUN mkdir -p /go/src/github.com/flix-tech/confs.tech.push
+WORKDIR /go/src/github.com/flix-tech/confs.tech.push
 
+RUN go get gopkg.in/urfave/cli.v1 github.com/gorilla/feeds
+
+COPY cmd cmd/
+COPY confs confs/
 COPY main.go .
 
-RUN go build -o confs.tech.push
+RUN mkdir /app
+RUN go build -o /app/confs.tech.push
 
 FROM alpine:3.9
 
