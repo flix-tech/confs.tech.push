@@ -9,6 +9,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/flix-tech/confs.tech.push/confs"
+	"github.com/otiai10/opengraph"
 )
 
 func MsteamsCommand() cli.Command {
@@ -46,7 +47,12 @@ func msteamsAction(topic string, conferences []confs.Conference, c *cli.Context)
 	}
 
 	for _, c := range conferences {
-		err := pushToMsteams(c, webhookURL)
+		og, err := opengraph.Fetch(c.URL)
+		if err != nil {
+			og = opengraph.New(c.URL) // Ignoring the error, opengraph data is not critical
+		}
+
+		err = pushToMsteams(c, og, webhookURL)
 		if err != nil {
 			_ = confs.SaveState(stateFile, processedConferences)
 			return err
@@ -62,11 +68,16 @@ type msteamsMessage struct {
 	Text string `json:"text"`
 }
 
-func pushToMsteams(c confs.Conference, webhookURL string) error {
-	message := msteamsMessage{
-		Text: fmt.Sprintf("[%s](%s)\n\n%s・%s", c.Name, c.URL, formatLocation(c), formatDateRange(c)),
+func pushToMsteams(c confs.Conference, og *opengraph.OpenGraph, webhookURL string) error {
+	text := fmt.Sprintf("**%s**  \n[%s](%s)\n\n%s・%s", c.Name, c.URL, c.URL, formatLocation(c), formatDateRange(c))
+	if og.Description != "" {
+		text += "\n\n" + og.Description
+	}
+	if len(og.Image) > 0 {
+		text += fmt.Sprintf("\n\n![img](%s)", og.Image[0].URL)
 	}
 
+	message := msteamsMessage{Text: text}
 	messageString, err := json.Marshal(message)
 	if err != nil {
 		return err

@@ -5,7 +5,7 @@ RUN apk --no-cache add git
 RUN mkdir -p /go/src/github.com/flix-tech/confs.tech.push
 WORKDIR /go/src/github.com/flix-tech/confs.tech.push
 
-RUN go get gopkg.in/urfave/cli.v1 github.com/gorilla/feeds
+RUN go get gopkg.in/urfave/cli.v1 github.com/gorilla/feeds github.com/otiai10/opengraph
 
 COPY cmd cmd/
 COPY confs confs/
