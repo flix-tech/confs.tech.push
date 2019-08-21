@@ -14,32 +14,15 @@ func AtomCommand() cli.Command {
 	return cli.Command{
 		Name:   "atom",
 		Usage:  "generate atom feed",
-		Action: atomAction,
+		Action: wrapAction(atomAction),
 		Flags:  []cli.Flag{},
 	}
 }
 
-func atomAction(c *cli.Context) error {
-	topic, err := validateTopicArgument(c.Args().Get(0))
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	// Fetch conference data
-	conferences, err := confs.GetConferences(topic)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	conferences = confs.FilterConferences(conferences,
-		confs.NewIsInFutureTest(),
-		confs.NewCFPFinishedTest(c.GlobalBool("cfp-finished")),
-		confs.NewIsNotInBlacklistedCountryTest(c.GlobalStringSlice("countries-blacklist")),
-	)
-
+func atomAction(topic string, conferences []confs.Conference, c *cli.Context) error {
 	atom, err := generateAtomFeed(topic, conferences)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return err
 	}
 
 	fmt.Println(atom)

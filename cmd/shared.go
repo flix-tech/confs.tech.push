@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"gopkg.in/urfave/cli.v1"
+
 	"github.com/flix-tech/confs.tech.push/confs"
 )
 
@@ -19,6 +21,34 @@ func validateTopicArgument(topic string) (string, error) {
 	}
 
 	return topic, nil
+}
+
+func wrapAction(action func(topic string, conferences []confs.Conference, c *cli.Context) error) func(c *cli.Context) error {
+	return func (c *cli.Context) error {
+		topic, err := validateTopicArgument(c.Args().Get(0))
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+
+		// Fetch conference data
+		conferences, err := confs.GetConferences(topic)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+
+		conferences = confs.FilterConferences(conferences,
+			confs.NewIsInFutureTest(),
+			confs.NewCFPFinishedTest(c.GlobalBool("cfp-finished")),
+			confs.NewIsNotInBlacklistedCountryTest(c.GlobalStringSlice("countries-blacklist")),
+		)
+
+		err = action(topic, conferences, c)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+
+		return nil
+	}
 }
 
 func formatDateRange(c confs.Conference) string {
