@@ -30,8 +30,9 @@ func main() {
 	}
 
 	app.Commands = []cli.Command{
-		cmd.SlackCommand(),
 		cmd.AtomCommand(),
+		cmd.SlackCommand(),
+		cmd.MsteamsCommand(),
 	}
 
 	err := app.Run(os.Args)

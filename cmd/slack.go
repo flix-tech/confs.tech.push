@@ -16,7 +16,7 @@ func SlackCommand() cli.Command {
 	return cli.Command{
 		Name:   "slack",
 		Usage:  "push to slack",
-		Action: slackAction,
+		Action: wrapAction(slackAction),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:   "slack-url",
@@ -37,51 +37,32 @@ func SlackCommand() cli.Command {
 	}
 }
 
-func slackAction(c *cli.Context) error {
-	topic, err := validateTopicArgument(c.Args().Get(0))
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	// Fetch conference data
-	conferences, err := confs.GetConferences(topic)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
+func slackAction(topic string, conferences []confs.Conference, c *cli.Context) error {
 	stateFile := c.String("state-file")
 	processedConferences := confs.LoadState(stateFile)
 
 	conferences = confs.FilterConferences(conferences,
-		confs.NewIsInFutureTest(),
-		confs.NewCFPFinishedTest(c.GlobalBool("cfp-finished")),
-		confs.NewIsNotInBlacklistedCountryTest(c.GlobalStringSlice("countries-blacklist")),
 		confs.NewTestConferenceIsNotOneOf(processedConferences),
 	)
 
 	// Push to slack
 	slackURL := c.String("slack-url")
 	if slackURL == "" {
-		return cli.NewExitError("Please provide slack Incoming Webhook url", 1)
+		return fmt.Errorf("Please provide slack Incoming Webhook url")
 	}
 	slackChannel := c.String("slack-channel")
 
 	for _, c := range conferences {
-		err = pushToSlack(c, slackURL, slackChannel)
+		err := pushToSlack(c, slackURL, slackChannel)
 		if err != nil {
 			_ = confs.SaveState(stateFile, processedConferences)
-			return cli.NewExitError(err, 1)
+			return err
 		}
 
 		processedConferences = append(processedConferences, c)
 	}
 
-	err = confs.SaveState(stateFile, processedConferences)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	return nil
+	return confs.SaveState(stateFile, processedConferences)
 }
 
 type slackField struct {
