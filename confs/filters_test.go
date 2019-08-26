@@ -58,3 +58,25 @@ func TestFilterCFPFinishedConferencesWithNotFinishedCFP(t *testing.T) {
 		t.Errorf("Not finished CFP Conference test must fail testConferenceCFPFinished()")
 	}
 }
+
+func TestFilterBlacklistedCountry(t *testing.T) {
+	result := NewIsNotInBlacklistedCountryTest([]string{"North Korea", "Norther Korea"})(Conference{
+		Name:    "Go2 North Korea",
+		Country: "North Korea",
+	})
+
+	if result == true {
+		t.Errorf("Blacklisted country passed test")
+	}
+}
+
+func TestFilterNotBlacklistedCountry(t *testing.T) {
+	result := NewIsNotInBlacklistedCountryTest([]string{"North Korea", "Norther Korea"})(Conference{
+		Name:    "Go2 South Korea",
+		Country: "South Korea",
+	})
+
+	if result == false {
+		t.Errorf("Not blacklisted country did not pass test")
+	}
+}

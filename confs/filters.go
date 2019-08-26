@@ -24,7 +24,7 @@ func NewIsNotInBlacklistedCountryTest(countriesBlacklist []string) ConferenceTes
 	return func(c Conference) bool {
 		for _, blacklistedCountry := range countriesBlacklist {
 			if c.Country == blacklistedCountry {
-				return true
+				return false
 			}
 		}
 
